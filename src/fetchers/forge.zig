@@ -62,8 +62,9 @@ pub fn plan(allocator: std.mem.Allocator, kind: Forge, input: Input) !Plan {
             .ref = archive_ref,
         }),
         .github => if (input.host == null)
-            // Avoid a cross-origin redirect so libcurl never needs to forward
-            // an Authorization header from github.com to codeload.github.com.
+            // Avoid a cross-origin redirect so the transport never needs to
+            // forward an Authorization header from github.com to
+            // codeload.github.com.
             try std.fmt.allocPrint(allocator, "https://codeload.github.com/{[owner]s}/{[repo]s}/tar.gz/{[ref]s}", .{
                 .owner = input.owner,
                 .repo = input.repo,

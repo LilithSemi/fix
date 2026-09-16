@@ -100,7 +100,7 @@ environment is exercised on x86_64 Linux; other platforms have received less
 testing.
 
 Nix is not required to build `fix`. A direct build requires Zig 0.16,
-`pkg-config`, libcurl, and libgit2:
+`pkg-config` and libgit2:
 
 ```console
 $ git clone https://github.com/psyclyx/fix
