@@ -5,7 +5,6 @@
   release ? "fast",
   zig_0_16,
   pkg-config,
-  curl,
   mercurial,
   openssh,
   gnutar,
@@ -37,7 +36,7 @@ stdenv.mkDerivation (finalAttrs: {
 
   zigDeps = zig.fetchDeps {
     inherit (finalAttrs) pname version src;
-    hash = "sha256-AzwwazONfr6TxF4gHeJZ/xBt7dFJGecet5FajQ86Iq8=";
+    hash = "sha256-Pn++iuvuuqwRQJ+0dHQXJZx4QliNfUzh49wdhukNvgc=";
   };
 
   postConfigure = ''
@@ -50,7 +49,6 @@ stdenv.mkDerivation (finalAttrs: {
     installShellFiles
     makeWrapper
   ];
-  buildInputs = [ curl ];
 
   # The direnv library (`use fix` / `use fix_flake`) is a plain shell file, so
   # it installs on every platform. Completions need to run the freshly-built

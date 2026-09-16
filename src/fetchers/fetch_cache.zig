@@ -11,7 +11,7 @@ const nar = store.nar;
 const FileCache = store.FileCache;
 const clock = @import("base").clock;
 const sync = @import("base").sync;
-const curl_transport = @import("curl_transport.zig");
+const http_transport = @import("http_transport.zig");
 const git_transport = @import("git_transport.zig");
 const BlockingPool = @import("base").BlockingPool;
 const fetch_types = @import("fetch/types.zig");
@@ -142,7 +142,7 @@ pub const FetchCache = struct {
     }
 
     /// Set the process environment inherited by tar/hg subprocesses and used
-    /// to derive proxy/TLS settings for libcurl and ziggit.
+    /// to derive proxy/TLS settings for the HTTP transport and ziggit.
     pub fn setEnvironment(self: *FetchCache, env: *const std.process.Environ.Map) !void {
         // Derive every owned field before disturbing the live environment.
         // Absence in the replacement environment deliberately clears a prior
@@ -576,25 +576,26 @@ pub const FetchCache = struct {
         else
             try self.netrcHeader(spec.url);
         defer if (auth) |header| header.deinit(self.allocator);
-        var header_storage: [1]curl_transport.Header = undefined;
-        const headers: []const curl_transport.Header = if (auth) |header| blk: {
+        var header_storage: [1]http_transport.Header = undefined;
+        const headers: []const http_transport.Header = if (auth) |header| blk: {
             header_storage[0] = .{ .name = header.name, .value = header.value };
             break :blk header_storage[0..1];
         } else &.{};
-        const curl_reporter: ?curl_transport.Reporter = if (reporter) |r|
+        const http_reporter: ?http_transport.Reporter = if (reporter) |r|
             .{ .ctx = r.ctx, .report = r.report }
         else
             null;
 
         var attempt: u32 = 1;
         const downloaded = while (true) : (attempt += 1) {
-            break curl_transport.download(self.allocator, spec.url, staging_path, .{
+            break http_transport.download(self.allocator, io, spec.url, staging_path, .{
                 .headers = headers,
-                .reporter = curl_reporter,
+                .reporter = http_reporter,
                 .connect_timeout_seconds = self.connect_timeout_seconds,
                 .stalled_timeout_seconds = self.stalled_timeout_seconds,
                 .max_bytes_per_second = std.math.mul(u64, self.download_speed_kib, 1024) catch std.math.maxInt(u64),
                 .ca_file = self.ssl_cert_file,
+                .environment = self.env,
             }) catch |err| {
                 std.Io.Dir.deleteFileAbsolute(io, staging_path) catch {};
                 if (attempt >= self.download_attempts or !retryable(err)) return err;
@@ -663,7 +664,7 @@ pub const FetchCache = struct {
 
         // Legacy two-line metadata gets one full validation and is upgraded to
         // the fast size-stamped form.
-        const actual = curl_transport.fileDigest(self.allocator, path) catch {
+        const actual = http_transport.fileDigest(io, path) catch {
             self.allocator.free(path);
             return null;
         };
