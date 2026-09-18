@@ -3,7 +3,12 @@
     .version = "0.3.0",
     .fingerprint = 0x59fa47602c959ada, // Changing this has security and trust implications.
     .minimum_zig_version = "0.16.0",
-    .dependencies = .{},
+    .dependencies = .{
+        .ziggit = .{
+            .url = "git+https://git.lilithsemi.com/LilithSemi/ziggit.git#33476955c813e3e36b0addf4a61dcedf0dfe42d6",
+            .hash = "ziggit-0.1.0-KYLpgeMPEwCSvXIxDTmqaKWXsizgO0xhx_0wAEQiD0AJ",
+        },
+    },
     .paths = .{
         "LICENSE",
         "LICENSES",

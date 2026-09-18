@@ -57,7 +57,7 @@ src/store/      store → base, runtime
                 Derivations, source snapshots, NAR, realization recipes,
                 daemon protocol and runtime.
 
-src/fetchers/   fetchers → base, runtime, store, libcurl, libgit2
+src/fetchers/   fetchers → base, runtime, store, libcurl, ziggit
                 Remote-source cache, provider planning, transports.
 
 src/expr/       expr → base, syntax, runtime, store, fetchers, build_options
