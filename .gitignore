@@ -3,6 +3,7 @@
 
 # Zig build output
 .zig-cache/
+zig-pkg/
 zig-out/
 
 # Isolated implementation worktrees

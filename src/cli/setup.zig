@@ -188,7 +188,7 @@ fn configureEngine(
     ev.setStalledDownloadTimeout(@intCast(@min(settings.getUint("stalled-download-timeout") orelse 300, @as(u64, std.math.maxInt(u32)))));
     ev.setDownloadSpeed(settings.getUint("download-speed") orelse 0);
     // The process environment has higher precedence than nix.conf for the CA
-    // bundle, matching Nix/libcurl.
+    // bundle, matching Nix.
     if (init.environ_map.get("NIX_SSL_CERT_FILE") == null and init.environ_map.get("SSL_CERT_FILE") == null)
         if (settings.get("ssl-cert-file")) |path| if (path.len != 0) try ev.setSslCertFile(path);
     const registry = settings.get("flake-registry") orelse "https://channels.nixos.org/flake-registry.json";

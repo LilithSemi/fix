@@ -11,7 +11,7 @@ pub const fetch = struct {
 };
 pub const forge = @import("forge.zig");
 pub const nar = store.nar;
-pub const curl_transport = @import("curl_transport.zig");
+pub const http_transport = @import("http_transport.zig");
 pub const git_transport = @import("git_transport.zig");
 
 pub const FileCache = store.FileCache;
@@ -27,6 +27,6 @@ test {
     _ = FetchService;
     _ = forge;
     _ = nar;
-    _ = curl_transport;
+    _ = http_transport;
     _ = git_transport;
 }
