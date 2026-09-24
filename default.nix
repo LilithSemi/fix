@@ -5,15 +5,26 @@ let
   };
 in
   {
-    nixpkgs ? npins.nixpkgs,
+    sources ? npins,
+    nixpkgs ? sources.nixpkgs,
+    # External deps — one arg each, defaulting to this project's own pins.
+    determinate-nix ? sources.determinate-nix,
+    lix ? sources.lix,
+    snix ? sources.snix,
     pkgs ? import nixpkgs {},
+    ...
   }: let
     finalPkgs = pkgs.extend overlay;
+    # The pins map threaded to consumers that read more than one pin (the
+    # bench harness): own pins as the base, then the batch seam, then the
+    # named dep args so single-dep overrides win.
+    allSources = npins // sources // {inherit determinate-nix lix snix;};
     inherit (finalPkgs) fix;
     vhsDemo = finalPkgs.callPackage ./nix/vhs-demo.nix {inherit fix;};
-    bench = finalPkgs.callPackage ./bench/harness.nix {inherit fix;};
+    bench = finalPkgs.callPackage ./bench/harness.nix {inherit fix; sources = allSources;};
     benchFix = finalPkgs.callPackage ./bench/harness.nix {
       inherit fix;
+      sources = allSources;
       nix = null;
       detsys = null;
       lix = null;
@@ -26,7 +37,7 @@ in
       };
       nixosDebugger = vhsDemo {
         tape = ./demo/nixos-debugger.tape;
-        environment.NIX_PATH = "nixpkgs=${npins.nixpkgs}";
+        environment.NIX_PATH = "nixpkgs=${allSources.nixpkgs}";
         fixtures."debug-target.nix" = ./demo/debug-target.nix;
         fixtures."nixos-system.nix" = ./demo/nixos-system.nix;
       };
