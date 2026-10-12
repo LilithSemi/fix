@@ -572,6 +572,15 @@ fn opBuildAttrsNamedPos(vm: *VM, frame: *Frame, code: []const u8, ip: usize, sto
     return dispatch(vm, frame, code, ip + 12, stop_depth);
 }
 
+fn opBuildAttrsDynPos(vm: *VM, frame: *Frame, code: []const u8, ip: usize, stop_depth: usize) anyerror!void {
+    frame.ip = ip;
+    const pos_index = readU32(code, ip);
+    const table = frame.chunk_ptr.attr_pos;
+    if (pos_index >= table.len) return error.InvalidBytecode;
+    try objects.buildDynamicAttr(vm, table[pos_index].pos);
+    return dispatch(vm, frame, code, ip + 4, stop_depth);
+}
+
 fn opBuildList(vm: *VM, frame: *Frame, code: []const u8, ip: usize, stop_depth: usize) anyerror!void {
     frame.ip = ip;
     const count = readU16(code, ip);
@@ -1280,6 +1289,7 @@ fn handlerFor(comptime op: OpCode) HandlerFn {
         .attrs_new_named => opBuildAttrsNamed,
         .attrs_new_named_pos_srt => opBuildAttrsNamedPosSorted,
         .attrs_new_named_pos => opBuildAttrsNamedPos,
+        .attrs_new_dyn_pos => opBuildAttrsDynPos,
         .list_new => opBuildList,
         .attrs_merge_strict => opMergeAttrsStrict,
         .attrs_merge => opMergeAttrs,

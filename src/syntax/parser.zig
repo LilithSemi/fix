@@ -85,7 +85,10 @@ const Act = grammar.Act;
 /// One attribute-path segment: a static name or a dynamic `${expr}`.
 const Seg = union(enum) {
     static: Node.Atom,
-    dynamic: *Node,
+    dynamic: Dynamic,
+
+    /// `offset` is the `${` token.
+    const Dynamic = struct { node: *Node, offset: u32 };
 };
 
 /// Accumulator for an attribute path's segments. Almost every attrpath is 1-2
@@ -870,7 +873,7 @@ pub const Parser = struct {
                 if (rhs[0].tok.type == .kw_or) try self.noteWarning(.or_as_identifier, rhs[0].tok);
                 return .{ .seg = .{ .static = .{ .offset = rhs[0].tok.offset, .len = rhs[0].tok.len } } };
             },
-            .attr_dynamic => return .{ .seg = .{ .dynamic = rhs[1].node } },
+            .attr_dynamic => return .{ .seg = .{ .dynamic = .{ .node = rhs[1].node, .offset = rhs[0].tok.offset } } },
 
             // ---- brace / clauses (unified attrset-or-pattern body) ----
             .brace_group => return .{ .brace = .{ .clauses = rhs[1].clauses, .lbrace = rhs[0].tok } },
@@ -1133,7 +1136,7 @@ pub const Parser = struct {
         for (segs.items()) |seg| {
             switch (seg) {
                 .static => |atomv| try pending.append(a, atomv),
-                .dynamic => |name| {
+                .dynamic => |dynamic| {
                     if (pending.items.len > 0) {
                         current = try self.arena.createNode(.attr_path, .{ .attr_path = .{
                             .root = current,
@@ -1143,7 +1146,7 @@ pub const Parser = struct {
                     }
                     current = try self.arena.createNode(.attr_dynamic, .{ .attr_dynamic = .{
                         .root = current,
-                        .name = name,
+                        .name = dynamic.node,
                     } });
                 },
             }
@@ -1169,7 +1172,7 @@ pub const Parser = struct {
             for (seg_items, mixed) |seg, *m| {
                 m.* = switch (seg) {
                     .static => |atomv| .{ .static = atomv },
-                    .dynamic => |name| .{ .dynamic = name },
+                    .dynamic => |dynamic| .{ .dynamic = dynamic.node },
                 };
             }
             return .{ .node = try self.arena.createNode(.has_attr_mixed, .{ .has_attr_mixed = .{
@@ -1189,10 +1192,20 @@ pub const Parser = struct {
     /// dynamic segments after a static prefix into wrapper attribute sets — the
     /// same shape the recursive-descent parser produced.
     fn foldBind(self: *Parser, segs: []const Seg, expr: *Node) anyerror!Node.AttrSetEntry {
+        const start = switch (segs[0]) {
+            .static => |name| name.offset,
+            .dynamic => |dynamic| dynamic.offset,
+        };
+        return self.foldBindFrom(segs, expr, start);
+    }
+
+    /// `start` is the offset of the whole attribute path, which Nix reports as
+    /// the position of a dynamic key nested in it.
+    fn foldBindFrom(self: *Parser, segs: []const Seg, expr: *Node, start: u32) anyerror!Node.AttrSetEntry {
         const a = self.arenaAllocator();
         if (segs[0] == .dynamic) {
-            const inner = if (segs.len == 1) expr else try self.nestChain(segs[1..], expr);
-            return .{ .path = &.{}, .dynamic_name = segs[0].dynamic, .expr = inner };
+            const inner = if (segs.len == 1) expr else try self.nestChain(segs[1..], expr, start);
+            return .{ .path = &.{}, .dynamic_name = segs[0].dynamic.node, .dynamic_offset = start, .expr = inner };
         }
         // leading static run
         var k: usize = 0;
@@ -1202,12 +1215,12 @@ pub const Parser = struct {
         if (k == segs.len) {
             return .{ .path = prefix, .dynamic_name = null, .expr = expr };
         }
-        return .{ .path = prefix, .dynamic_name = null, .expr = try self.nestChain(segs[k..], expr) };
+        return .{ .path = prefix, .dynamic_name = null, .expr = try self.nestChain(segs[k..], expr, start) };
     }
 
-    fn nestChain(self: *Parser, segs: []const Seg, expr: *Node) anyerror!*Node {
+    fn nestChain(self: *Parser, segs: []const Seg, expr: *Node, start: u32) anyerror!*Node {
         const a = self.arenaAllocator();
-        const entry = try self.foldBind(segs, expr);
+        const entry = try self.foldBindFrom(segs, expr, start);
         const entries = try a.alloc(Node.AttrSetEntry, 1);
         entries[0] = entry;
         return self.arena.createNode(.attr_set, .{ .attr_set = .{
