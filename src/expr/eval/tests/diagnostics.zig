@@ -20,7 +20,7 @@ test "successful evaluation retains unsilenced parser deprecations" {
     );
 
     var policy: policy_mod.LanguagePolicy = .{};
-    policy.applyFeatureSets(.initEmpty(), .initOne(.floating_without_zero));
+    policy.applyFeatureSets(.empty, .initOne(.floating_without_zero));
     ev.configureLanguage(policy);
     _ = try ev.evaluate(".5");
     try std.testing.expectEqual(@as(usize, 0), ev.getDiagnostics().len);

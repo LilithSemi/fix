@@ -88,11 +88,11 @@ inline fn dispatch(vm: *VM, frame: *Frame, code: []const u8, ip: usize, stop_dep
         debug.checkVm(vm, "dispatch");
         debug.checkFrameSync(vm, frame, code, "dispatch");
     }
-    const op: OpCode = @enumFromInt(code[ip]);
+    const op: OpCode = @fromBackingInt(@intCast(code[ip]));
     if (comptime trace_log.enabled) {
         trace_log.op(vm.vm_trace, vm.workerId(), vm.frames_len, frame.chunk_id, @intCast(ip), op, vm.sp);
     }
-    return @call(.always_tail, handlers[@intFromEnum(op)], .{ vm, frame, code, ip + 1, stop_depth });
+    return @call(.always_tail, handlers[@backingInt(op)], .{ vm, frame, code, ip + 1, stop_depth });
 }
 
 /// End of chunk reached without a `ret` — ensure there's at least one
@@ -482,7 +482,7 @@ fn opBreakpoint(vm: *VM, frame: *Frame, code: []const u8, ip: usize, stop_depth:
     const h: Hit = if (vm.debug.breakpoints) |bps|
         bps.hit(frame.chunk_id, frame.chunk_ptr, off, vm.debugFrameDepth())
     else
-        .{ .original = @intFromEnum(OpCode.halt), .pause = false, .kind = .none };
+        .{ .original = @backingInt(OpCode.halt), .pause = false, .kind = .none };
     if (h.pause) {
         if (vm.debug.break_sink) |sink| {
             const reason: vm_mod.BreakReason = switch (h.kind) {
@@ -1108,8 +1108,8 @@ fn opGetAttrPathMixedOr(vm: *VM, frame: *Frame, code: []const u8, ip: usize, sto
         const tag = code[cur_ip];
         cur_ip += 1;
         switch (tag) {
-            @intFromEnum(bytecode_mod.MixedAttrSegmentTag.static) => cur_ip += 4,
-            @intFromEnum(bytecode_mod.MixedAttrSegmentTag.dynamic) => {},
+            @backingInt(bytecode_mod.MixedAttrSegmentTag.static) => cur_ip += 4,
+            @backingInt(bytecode_mod.MixedAttrSegmentTag.dynamic) => {},
             else => return error.InvalidBytecode,
         }
     }
@@ -1137,8 +1137,8 @@ fn opHasAttrPathMixed(vm: *VM, frame: *Frame, code: []const u8, ip: usize, stop_
         const tag = code[cur_ip];
         cur_ip += 1;
         switch (tag) {
-            @intFromEnum(bytecode_mod.MixedAttrSegmentTag.static) => cur_ip += 4,
-            @intFromEnum(bytecode_mod.MixedAttrSegmentTag.dynamic) => {},
+            @backingInt(bytecode_mod.MixedAttrSegmentTag.static) => cur_ip += 4,
+            @backingInt(bytecode_mod.MixedAttrSegmentTag.dynamic) => {},
             else => return error.InvalidBytecode,
         }
     }
@@ -1347,8 +1347,9 @@ fn handlerFor(comptime op: OpCode) HandlerFn {
 
 const handlers: [opcode.count]HandlerFn = blk: {
     var table: [opcode.count]HandlerFn = undefined;
-    for (@typeInfo(OpCode).@"enum".fields) |field| {
-        table[field.value] = handlerFor(@field(OpCode, field.name));
+    const op_info = @typeInfo(OpCode).@"enum";
+    for (op_info.field_names, op_info.field_values) |field_name, field_value| {
+        table[field_value] = handlerFor(@field(OpCode, field_name));
     }
     break :blk table;
 };
