@@ -108,6 +108,10 @@ pub const OpCode = enum(u8) {
     /// `attrs_new_named_pos_srt` without the sorted-names guarantee (cache
     /// loader rewrite target, like `attrs_new_named`).
     attrs_new_named_pos,
+    /// `attrs_new` for one dynamic-key pair, with the key's source position
+    /// at `Chunk.attr_pos[pos_index]`. The table entry's name is unused.
+    /// Operand: pos_index:u32.
+    attrs_new_dyn_pos,
     /// Build a list from items on the stack.
     /// Operand: 2-byte count of items.
     list_new,
@@ -492,6 +496,7 @@ pub fn layout(op: OpCode) []const Operand {
         .attrs_new, .attrs_new_srt => comptime &[_]Operand{cnt(.b2, "entries")},
         .attrs_new_named_srt, .attrs_new_named => comptime &[_]Operand{ cnt(.b2, "entries (named)"), .{ .skip = .b4 } },
         .attrs_new_named_pos_srt, .attrs_new_named_pos => comptime &[_]Operand{ cnt(.b2, "entries (named)"), .{ .skip = .b4 }, cnt(.b2, "positions"), .{ .skip = .b4 } },
+        .attrs_new_dyn_pos => comptime &[_]Operand{.{ .skip = .b4 }},
         .list_new => comptime &[_]Operand{cnt(.b2, "items")},
         .list_cat_n => comptime &[_]Operand{cnt(.b2, "lists")},
         .str_cat, .path_cat => comptime &[_]Operand{cnt(.b2, "parts")},

@@ -74,6 +74,20 @@ pub fn emitBuildAttrsSorted(self: *Compiler, count: u16, names: []const types.In
     try self.builder.writeU32(self.allocator, pos_start);
 }
 
+/// Build one dynamic-key attrset from the `[name, value]` stack pair. With a
+/// source file, the entry keeps the position at `offset` for `unsafeGetAttrPos`.
+pub fn emitDynamicAttr(self: *Compiler, offset: u32) !void {
+    _ = self.source_path orelse return emitOpU16(self, .attrs_new, 1);
+    const position = try diagnostics.sourcePositionForOffset(self, offset);
+    const pos_index: u32 = @intCast(self.builder.attr_pos.items.len);
+    try self.builder.attr_pos.append(self.allocator, .{
+        .name = try self.intern.intern(""),
+        .pos = .{ .file = try diagnostics.sourceFileId(self), .line = position.line, .column = position.column },
+    });
+    try emitOp(self, .attrs_new_dyn_pos);
+    try self.builder.writeU32(self.allocator, pos_index);
+}
+
 fn posNameLessThan(_: void, a: heap_mod.AttrPosEntry, b: heap_mod.AttrPosEntry) bool {
     return a.name < b.name;
 }
