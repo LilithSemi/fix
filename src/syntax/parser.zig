@@ -452,7 +452,7 @@ pub const Parser = struct {
         var quiet_shifts: u32 = cooldown;
         while (true) {
             const state = states[sp - 1];
-            const la = @intFromEnum(tok.type);
+            const la = @backingInt(tok.type);
             const c = Tab.action[state * Tab.num_terminals + la];
             switch (lr.cellKind(c)) {
                 lr.action_shift => {
@@ -471,7 +471,7 @@ pub const Parser = struct {
                         const top = if (ctx_stack.items.len > 0) ctx_stack.items[ctx_stack.items.len - 1] else break :elide;
                         if (top.kind != .brace or top.clauses < elide_min_prior_clauses) break :elide;
                         const eq_state = lr.cellArg(c);
-                        const g = Tab.goto_table[eq_state * Tab.num_nonterminals + @intFromEnum(grammar.Nonterminal.expr)];
+                        const g = Tab.goto_table[eq_state * Tab.num_nonterminals + @backingInt(grammar.Nonterminal.expr)];
                         if (g < 0) break :elide;
                         const res = self.scanElidableBody(scanner) orelse break :elide;
                         // Shift the `=`, then splice the elided body onto the
@@ -574,7 +574,7 @@ pub const Parser = struct {
         while (true) {
             if (tok.type == .eof) return false;
             tok.* = try self.nextToken(scanner); // discard a token (starting with the offending one)
-            const la = @intFromEnum(tok.type);
+            const la = @backingInt(tok.type);
             if (lr.cellKind(Tab.action[top_state * terminal_count + la]) != lr.action_error) return true;
         }
     }

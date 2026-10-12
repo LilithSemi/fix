@@ -141,12 +141,12 @@ pub const Reader = struct {
 };
 
 comptime {
-    if (std.meta.fields(model.Chunk).len != 14)
+    if (@typeInfo(model.Chunk).@"struct".field_names.len != 14)
         @compileError("Chunk changed shape: update the cache codec and its field guard.");
-    if (std.meta.fields(model.SchedulingHints).len != 6)
+    if (@typeInfo(model.SchedulingHints).@"struct".field_names.len != 6)
         @compileError("SchedulingHints changed shape: update the cache codec and its field guard.");
-    if (std.meta.fields(model.ChunkStrictness).len != 2)
+    if (@typeInfo(model.ChunkStrictness).@"struct".field_names.len != 2)
         @compileError("ChunkStrictness changed shape: update the cache codec and its field guard.");
-    if (std.meta.fields(deferred_table.Entry).len != 10)
+    if (@typeInfo(deferred_table.Entry).@"struct".field_names.len != 10)
         @compileError("deferred_table.Entry changed shape: update the cache codec and its field guard.");
 }

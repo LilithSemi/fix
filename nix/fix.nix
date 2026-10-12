@@ -3,8 +3,7 @@
   stdenv,
   cpu ? "baseline",
   release ? "fast",
-  zig_0_16,
-  pkg-config,
+  zig_0_17,
   mercurial,
   openssh,
   gnutar,
@@ -12,7 +11,7 @@
   makeWrapper,
 }:
 let
-  zig = zig_0_16;
+  zig = zig_0_17;
 in
 stdenv.mkDerivation (finalAttrs: {
   pname = "fix";
@@ -36,7 +35,7 @@ stdenv.mkDerivation (finalAttrs: {
 
   zigDeps = zig.fetchDeps {
     inherit (finalAttrs) pname version src;
-    hash = "sha256-AzwwazONfr6TxF4gHeJZ/xBt7dFJGecet5FajQ86Iq8=";
+    hash = "sha256-RsPfhrMtOH0jyaZjAr3UBRUTDZH1qmkXSUlp8O1Sjjo=";
   };
 
   postConfigure = ''
@@ -45,7 +44,6 @@ stdenv.mkDerivation (finalAttrs: {
 
   nativeBuildInputs = [
     zig.hook
-    pkg-config
     installShellFiles
     makeWrapper
   ];
