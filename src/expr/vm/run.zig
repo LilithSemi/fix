@@ -1051,10 +1051,10 @@ fn attrBindOp(comptime wide: bool) HandlerFn {
                 const entry_name = entries.names[entry_i];
                 const entry_value = entries.values[entry_i];
                 if (entry_name < name) {
-                    if (!allow_extra) return error.UnexpectedAttribute;
+                    if (!allow_extra) return trace.unexpectedArgument(vm, entry_name);
                     entry_i += 1;
                 } else if (entry_name > name) {
-                    if (slot != std.math.maxInt(u16)) return error.MissingAttribute;
+                    if (slot != std.math.maxInt(u16)) return trace.missingArgument(vm, name);
                     pair_i += 1;
                 } else {
                     if (slot != std.math.maxInt(u16)) {
@@ -1075,10 +1075,11 @@ fn attrBindOp(comptime wide: bool) HandlerFn {
             }
             while (pair_i < count) : (pair_i += 1) {
                 const pair_at = pairs_start + pair_i * stride;
+                const name: InternId = if (wide) readU32(code, pair_at) else @intCast(readU16(code, pair_at));
                 const slot = readU16(code, pair_at + name_len);
-                if (slot != std.math.maxInt(u16)) return error.MissingAttribute;
+                if (slot != std.math.maxInt(u16)) return trace.missingArgument(vm, name);
             }
-            if (!allow_extra and entry_i < entries.len()) return error.UnexpectedAttribute;
+            if (!allow_extra and entry_i < entries.len()) return trace.unexpectedArgument(vm, entries.names[entry_i]);
 
             _ = stack.pop(vm);
             return dispatch(vm, frame, code, pairs_end, stop_depth);

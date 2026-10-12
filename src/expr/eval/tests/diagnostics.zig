@@ -213,3 +213,14 @@ test "cached import failures retain their original diagnostics" {
         try std.testing.expect(found_import_origin);
     }
 }
+
+test "attrset pattern errors name the argument" {
+    var ev = try Engine.init(std.testing.allocator, .{ .worker_count = 0 });
+    defer ev.deinit();
+
+    try std.testing.expectError(error.MissingAttribute, ev.evaluate("({ x, y }: x) { x = 1; }"));
+    try std.testing.expectEqualStrings("function called without required argument 'y'", ev.getTrace().message.?);
+
+    try std.testing.expectError(error.UnexpectedAttribute, ev.evaluate("({ x }: x) { x = 1; z = 2; }"));
+    try std.testing.expectEqualStrings("function called with unexpected argument 'z'", ev.getTrace().message.?);
+}
