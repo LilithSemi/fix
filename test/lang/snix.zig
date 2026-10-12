@@ -33,7 +33,7 @@ fn errorKindSubs(kind: []const u8) ?[]const []const u8 {
         .{ "InvalidHash", &[_][]const u8{ "invalid SRI hash", "invalid hash" } },
         .{ "InvalidStorePath", &[_][]const u8{ "is not a valid store path", "store path" } },
         .{ "HashMismatch", &[_][]const u8{ "store path mismatch", "hash mismatch" } },
-        .{ "DerivationError", &[_][]const u8{ "invalid derivation name", "should have type", "duplicate derivation output", "cannot process __json" } },
+        .{ "DerivationError", &[_][]const u8{ "invalid derivation name", "should have type", "duplicate derivation output", "cannot process __json", "`__json` attribute cannot be passed" } },
         .{ "UnexpectedArgument", &[_][]const u8{ "unsupported argument", "unexpected argument" } },
         .{ "VariableAlreadyDefined", &[_][]const u8{"already defined"} },
         .{ "DuplicateAttrsKey", &[_][]const u8{ "already defined", "duplicate" } },

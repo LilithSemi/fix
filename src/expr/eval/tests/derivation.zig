@@ -482,6 +482,18 @@ test "derivation builtin rejects wrong-typed required attrs" {
     );
 }
 
+test "structured derivation rejects a __json attribute" {
+    try std.testing.expectError(error.InvalidDerivation, renderForTest(
+        \\(builtins.derivation {
+        \\  name = "foo";
+        \\  system = ":";
+        \\  builder = ":";
+        \\  __structuredAttrs = true;
+        \\  __json = "foo";
+        \\}).drvPath
+    ));
+}
+
 test "derivation builtin rejects invalid outputs list" {
     try std.testing.expectError(
         error.InvalidDerivationOutput,

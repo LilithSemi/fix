@@ -480,6 +480,13 @@ fn normalizeDerivation(self: *VM, attrs_id: ObjectId, drv_name: []const u8, outp
     errdefer env.deinit(self.allocator);
     const original_attrs = try self.heap.materializeAttrs(attrs_id);
     if (structured) {
+        if (self.heap.getAttrValue(attrs_id, try self.intern.intern("__json"))) |_| {
+            try vm_trace.setErrorMessage(self, "a `__json` attribute cannot be passed to builtins.derivationStrict when structured attributes are enabled");
+            return error.InvalidDerivation;
+        } else |err| switch (err) {
+            error.MissingAttribute => {},
+            else => return err,
+        }
         const json = try structuredAttrsJson(self, attrs_id, output_names.explicit, ignore_nulls, &inputs, &owned_strings);
         try owned_strings.append(self.allocator, json);
         try env.append(self.allocator, .{ .name = "__json", .value = json });
